@@ -1,6 +1,6 @@
 h1. snake-detector
 
-Hey! This is an unfinished hobby project that I'm working on, using iNat.
+Hey! This is an unfinished hobby project that I'm working on, using a forked version of iNat.
 
 
 
