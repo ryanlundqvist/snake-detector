@@ -1,3 +1,12 @@
+#snake-detector
+
+Hey! This is an unfinished hobby project that I'm working on, using iNat.
+
+
+
+
+
+
 h2. iNaturalist  "!https://github.com/inaturalist/inaturalist/workflows/inaturalist%20CI/badge.svg!":https://github.com/inaturalist/inaturalist/actions
 
 Open source Rails app behind "iNaturalist.org":https://www.inaturalist.org/
