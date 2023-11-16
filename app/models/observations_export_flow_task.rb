@@ -12,7 +12,7 @@ class ObservationsExportFlowTask < FlowTask
   class ObservationsExportDeleted < ObservationsExportError; end
 
   before_save do |record|
-    record.redirect_url = FakeView.export_observations_path
+    record.redirect_url = UrlHelper.export_observations_path
   end
 
   def must_have_query
@@ -62,7 +62,7 @@ class ObservationsExportFlowTask < FlowTask
       csv_archive
     end
     logger.info "ObservationsExportFlowTask #{id}: Created archive at #{archive_path}" if @debug
-    open(archive_path) do |f|
+    File.open( archive_path ) do |f|
       self.outputs.create!(:file => f)
     end
     logger.info "ObservationsExportFlowTask #{id}: Created outputs" if @debug
@@ -91,16 +91,27 @@ class ObservationsExportFlowTask < FlowTask
   end
 
   def preloads
-    includes = [ :user, { identifications: [:stored_preferences] } ]
+    includes = [
+      { user: :friendships },
+      { identifications: [:stored_preferences] },
+      :project_observations
+    ]
     if export_columns.detect{|c| c == "common_name"}
       includes << { taxon: { taxon_names: :place_taxon_names } }
     end
     if export_columns.detect{|c| c =~ /^ident_by_/}
       includes[1][:identifications] = [:stored_preferences, :user]
     end
+    if export_columns.detect{|c| c =~ /^place.*_name/}
+      includes << { observations_places: :place }
+    end
     includes << { observation_field_values: :observation_field }
-    includes << { photos: [:user, :flags, :file_prefix, :file_extension] } if export_columns.detect{ |c| c == "image_url" }
-    includes << :sounds if export_columns.detect{ |c| c == "sound_url" }
+    if export_columns.detect{ |c| c == "image_url" }
+      includes << { photos: [:user, :flags, :file_prefix, :file_extension, :moderator_actions] }
+    end
+    if export_columns.detect{ |c| c == "sound_url" }
+      includes << { sounds: [:user, :flags, :moderator_actions] }
+    end
     includes << :quality_metrics if export_columns.detect{ |c| c == "captive_cultivated" }
     includes
   end
@@ -144,7 +155,7 @@ class ObservationsExportFlowTask < FlowTask
     site = user.site || Site.default
     FileUtils.mkdir_p(File.dirname(json_path), mode: 0755)
     search_params = params.merge( viewer: user, authenticate: user )
-    open(json_path, "w") do |f|
+    File.open( json_path, "w" ) do |f|
       f << "["
       first = true
       for_each_observation( search_params ) do |observation|

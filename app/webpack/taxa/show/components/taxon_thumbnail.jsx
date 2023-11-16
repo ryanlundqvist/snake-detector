@@ -8,7 +8,7 @@ import { urlForTaxon as utilUrlForTaxon } from "../../shared/util";
 
 const TaxonThumbnail = ( {
   taxon,
-  key,
+  className,
   badgeText,
   badgeTip,
   height,
@@ -70,20 +70,24 @@ const TaxonThumbnail = ( {
   if ( overlay ) {
     overlayDiv = ( <div className="overlay">{ overlay }</div > );
   }
+  let elementClassName = "TaxonThumbnail thumbnail d-flex flex-column";
+  if ( className ) {
+    elementClassName = `${elementClassName} ${className}`;
+  }
   return (
-    <div key={key} className="TaxonThumbnail thumbnail">
+    <div key={`similar-taxon-thumbnail-${taxon.id}`} className={elementClassName}>
       { badge }
       <a href={urlForTaxon( taxon )} onClick={onClick}>{ img }</a>
       { overlayDiv }
-      <div className="caption">
+      <div className="caption d-flex flex-column flex-grow-1 justify-content-between">
         <SplitTaxon
           taxon={taxon}
           url={urlForTaxon( taxon )}
           noParens
           truncate={truncate}
           onClick={onClick}
-          user={ config.currentUser }
-          noInactive={ noInactive }
+          user={config.currentUser}
+          noInactive={noInactive}
         />
         { captionForTaxon ? captionForTaxon( taxon ) : null }
       </div>
@@ -93,7 +97,7 @@ const TaxonThumbnail = ( {
 
 TaxonThumbnail.propTypes = {
   taxon: PropTypes.object.isRequired,
-  key: PropTypes.string,
+  className: PropTypes.string,
   badgeText: PropTypes.oneOfType( [
     PropTypes.object,
     PropTypes.string,
@@ -112,7 +116,6 @@ TaxonThumbnail.propTypes = {
 
 TaxonThumbnail.defaultProps = {
   height: 130,
-  truncate: 15,
   urlForTaxon: utilUrlForTaxon,
   config: {}
 };

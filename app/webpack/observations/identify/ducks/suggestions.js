@@ -89,7 +89,7 @@ export default function reducer(
       if ( observation && isFeaturedObs ) {
         newState.query = Object.assign( newState.query, {
           taxon: state.query.taxon,
-          taxon_id: state.query.taxon.id,
+          taxon_id: state.query.taxon_id,
           place: state.query.place,
           place_id: state.query.place_id
         } );
@@ -180,7 +180,7 @@ export function updateQuery( query ) {
   return ( dispatch, getState ) => {
     const s = getState( );
     const { testingApiV2 } = s.config;
-    const newQuery = Object.assign( { }, s.suggestions.query, query );
+    const newQuery = { ...s.suggestions.query, ...query };
     if ( query.place && !query.place_id ) {
       newQuery.place_id = query.place.id;
     }
@@ -199,7 +199,7 @@ export function updateQuery( query ) {
     if ( query.taxon_id && !query.taxon ) {
       const params = {};
       if ( testingApiV2 ) {
-        params.fields = Object.assign( {}, TAXON_FIELDS, { ancestors: TAXON_FIELDS } );
+        params.fields = { ...TAXON_FIELDS, ancestors: TAXON_FIELDS };
       }
       inatjs.taxa.fetch( query.taxon_id, params )
         .then( response => {

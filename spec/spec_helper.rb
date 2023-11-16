@@ -178,9 +178,6 @@ class MetaService
       fname = uri.to_s.parameterize
       fixture_path = File.expand_path( File.dirname( __FILE__ ) + "/fixtures/#{name.underscore}/#{fname}" )
       if File.exist?( fixture_path )
-        # puts "[DEBUG] Loading cached API response for #{uri}: #{fixture_path}"
-        # Nokogiri::XML(open(fixture_path))
-        # OpenStruct.new(body: open(fixture_path).read )
         File.open( fixture_path ) do | f |
           return OpenStruct.new( body: f.read )
         end
@@ -224,6 +221,13 @@ LocalPhoto.attachment_definitions[:file].tap do | d |
     d[:url] = "/attachments/:class/:attachment/:id/:style/:basename.:extension"
     d[:default_url] = "/attachment_defaults/:class/:attachment/defaults/:style.png"
   end
+end
+
+VCR.configure do |config|
+  config.allow_http_connections_when_no_cassette = true
+  config.cassette_library_dir = "fixtures/vcr_cassettes"
+  config.hook_into(:webmock)
+  config.ignore_localhost = true
 end
 
 # Turn on elastic indexing for certain models. We do this selectively b/c

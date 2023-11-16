@@ -1,5 +1,4 @@
 @import "../colors";
-@import "../c3";
 @import "../users/_user_image";
 @import "../shared/observations_grid_item";
 @import "../shared/loading_spinner";
@@ -87,6 +86,15 @@ $tip-opacity: 1;
   }
 }
 
+@mixin green-links {
+  a {
+    color: $inat-green;
+  }
+  a:hover, a:active, a:focus {
+    color: lighten( $inat-green, 10% );
+  }
+}
+
 #bodywrapper:after {
   height: 0px;
 }
@@ -101,6 +109,15 @@ $tip-opacity: 1;
       &:first-child {
         margin-left: 0px;
       }
+    }
+  }
+
+  .btn-dark {
+    border-color: $dark-gray;
+    background-color: $dark-gray;
+    color: #eee;
+    &:hover, &:focus {
+      color: inherit;
     }
   }
 
@@ -181,9 +198,9 @@ $tip-opacity: 1;
       text-align: center;
     }
     .text-muted {
+      color: #ddd;
       strong {
-        color: #eee;
-        font-weight: normal;
+        color: white;
       }
     }
 
@@ -216,13 +233,16 @@ $tip-opacity: 1;
       opacity: 0.5;
     }
 
+    p.text-muted {
+      @include green-links;
+    }
+
     .btn-bordered,
     select {
       background-color: $background-color;
       color: white;
       border: 2px solid darken( $inat-green, 10% );
       border-radius: 100px;
-      text-transform: uppercase;
       font-weight: 100;
       i {
         margin-right: 5px;
@@ -360,8 +380,11 @@ $tip-opacity: 1;
       margin: 50px auto;
     }
 
-    .updated-at {
-      margin-top: 50px
+    .updated-at, .update-schedule {
+      margin-top: 50px;
+    }
+    .updated-at + .update-schedule {
+      margin-top: 0px;
     }
 
     #view-stats-buttons {
@@ -502,10 +525,10 @@ $tip-opacity: 1;
         width: 100%;
         position: absolute;
         text-align: center;
-        top: 120px;
+        top: 115px;
         text-transform: uppercase;
-        font-weight: 100;
-        color: $gray;
+        font-weight: 700;
+        color: white;
         .count {
           display: block;
           font-size: 200%;
@@ -680,9 +703,6 @@ $tip-opacity: 1;
         color: white;
         font-weight: 100;
       }
-      .sciname {
-        white-space: nowrap;
-      }
     }
     .media {
       height: $obs-grid-photo-size;
@@ -705,14 +725,11 @@ $tip-opacity: 1;
       }
     }
   }
+  .popular .ObservationsGridItem .UserImage {
+    top: 180px;
+  }
 
   .Publications {
-    a {
-      color: $inat-green;
-    }
-    a:hover, a:active, a:focus {
-      color: lighten( $inat-green, 10% );
-    }
     .publication {
       display: flex;
       flex-direction: column;
@@ -779,11 +796,6 @@ $tip-opacity: 1;
 
     > .controls {
       margin: 20px 0;
-      .btn-default {
-        border-color: $dark-gray;
-        background-color: $dark-gray;
-        color: #eee;
-      }
       .btn-primary {
         background-color: $inat-green;
         border-color: $inat-green;
@@ -799,7 +811,18 @@ $tip-opacity: 1;
       }
     }
     .CountryGrowth {
+      .map {
+        position: relative;
+        .btn {
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          min-width: 200px;
+          margin-left: -100px;
+        }
+      }
       .chart svg {
+        width: 100%;
         height: 500px;
         min-height: 500px;
       }
@@ -815,10 +838,12 @@ $tip-opacity: 1;
         stroke-width: 0;
       }
       .bars {
-        height: 500px;
-        overflow-x: visible;
-        overflow-y: scroll;
         select { width: 100%; }
+        @media (min-width: 501px) {
+          height: 500px;
+          overflow-x: visible;
+          overflow-y: scroll;
+        }
       }
       .bar {
         border: 0 transparent;
@@ -1119,13 +1144,7 @@ $tip-opacity: 1;
         margin-bottom: 0;
       }
     }
-    p {
-      a,
-      a:hover {
-        color: $inat-green;
-      }
-    }
-    .btn {
+    .btn-donate {
       font-weight: bold !important;
     }
     .Donors .chart svg {
@@ -1165,7 +1184,7 @@ $tip-opacity: 1;
       margin-bottom: 20px;
     }
 
-    .DonateContent2021 {
+    .donate-content {
       .flex-row {
         align-items: center;
 
@@ -1507,6 +1526,60 @@ $tip-opacity: 1;
     }
   }
 
+  .BroaderImpacts {
+    .outlinks {
+      display: flex;
+      justify-content: space-around;
+    }
+    .outlink-with-icon {
+      display: flex;
+      align-items: center;
+      .title-subtitle {
+        flex-grow: 2;
+        display: flex;
+        flex-direction: column;
+        .title {
+          font-size: 120%;
+          a {
+            color: white;
+          }
+        }
+        .subtitle {
+          font-size: 90%;
+          text-transform: uppercase;
+          a {
+            color: $gray;
+          }
+        }
+      }
+      .icon {
+        align-self: flex-start;
+        padding: 2px;
+        display: inline-block;
+        margin-right: 15px;
+        background: white;
+        img {
+          width: 40px;
+          height: 40px;
+          border: 1px solid #ccc
+        }
+      }
+    }
+  }
+
+  @media (max-width: 991px) {
+    .BroaderImpacts .outlinks-container {
+      text-align: center;
+      .outlinks {
+        display: inline-block;
+        text-align: left;
+        .outlink-with-icon + .outlink-with-icon {
+          margin-top: 20px;
+        }
+      }
+    }
+  }
+
   @media (max-width: 500px) {
     .DonateBanner {
       flex-direction: column;
@@ -1521,6 +1594,11 @@ $tip-opacity: 1;
 
 
   .btn {
+    &.btn-primary {
+      white-space: normal;
+      word-break: break-word;
+    }
+
     &.btn-donate {
       background-color: white;
       border-color: white;
@@ -1538,6 +1616,71 @@ $tip-opacity: 1;
         background-color: hsl(0, 0, 99%);
         border-color: hsl(0, 0, 99%);
         color: $inat-green;
+      }
+    }
+  }
+
+  .btn-link-underline {
+    margin-bottom: 20px;
+    text-decoration: underline;
+    color: $inat-green;
+  }
+
+  #app {
+    .CodeContributors {
+      p {
+        margin-bottom: 20px;
+      }
+
+      li {
+        @include green-links;
+      }
+
+      .UserImage {
+        width: 64px;
+        height: 64px;
+        border-width: 3px;
+      }
+      .flex-row > :last-child {
+        width: 100%;
+      }
+      h4 {
+        font-size: 14px;
+        margin-top: 0;
+      }
+    }
+  }
+
+  #app {
+    .MonthlySupporters {
+      $monthly-supporter-dim: 80px;
+      margin-bottom: 20px;
+      .supporters {
+        @include green-links;
+
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: center;
+      }
+
+      .monthly-supporter {
+        text-align: center;
+        width: $monthly-supporter-dim;
+        margin-bottom: 20px;
+        flex-grow: 1;
+        margin: 10px;
+      }
+      .UserImage {
+        width: $monthly-supporter-dim;
+        height: $monthly-supporter-dim;
+        margin-bottom: 10px;
+      }
+      .userlink {
+        display: block;
+        text-align: center;
+        text-overflow: ellipsis;
+        overflow: hidden;
       }
     }
   }

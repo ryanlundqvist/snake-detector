@@ -84,6 +84,7 @@ class NewSpecies extends React.Component {
     const minDate = moment( _.sortBy( accumulation.map( i => i.date ), i => i.date )[0] || `${year}-01-01` );
     const minYear = minDate.year( );
     const minMonth = minDate.month( ) + 1;
+    const focusDate = moment( `${focusYear}-${String( focusMonth ).padStart( 2, "0" )}-10` );
     for ( let y = minYear; y <= year; y += 1 ) {
       const startMonth = ( y === minYear ) ? minMonth : 1;
       for ( let month = startMonth; month <= 12; month += 1 ) {
@@ -157,7 +158,7 @@ class NewSpecies extends React.Component {
           series={series}
           legendPosition="nw"
           showContext
-          onClick={d => {
+          onClick={( _clickEvent, d ) => {
             if ( d.seriesName === "accumulated" ) {
               return false;
             }
@@ -171,7 +172,7 @@ class NewSpecies extends React.Component {
           { showAccumulation ? (
             <button
               type="button"
-              className="btn btn-sm btn-default"
+              className="btn btn-sm btn-dark"
               onClick={( ) => this.setState( { showAccumulation: false } )}
             >
               { I18n.t( "hide_running_total" ) }
@@ -179,7 +180,7 @@ class NewSpecies extends React.Component {
           ) : (
             <button
               type="button"
-              className="btn btn-sm btn-default"
+              className="btn btn-sm btn-dark"
               onClick={( ) => this.setState( { showAccumulation: true } )}
             >
               { I18n.t( "show_running_total" ) }
@@ -198,13 +199,13 @@ class NewSpecies extends React.Component {
                 <a href={`/observations?${_.map( obsParams, ( v, k ) => `${k}=${v}` ).join( "&" )}`}>
                   { observations.length < totalSpeciesIDsForMonth ? (
                     I18n.t( "new_species_added_in_interval_x_of_y", {
-                      interval: moment( `${focusYear}-${focusMonth}-10` ).format( I18n.t( "momentjs.month_year" ) ),
+                      interval: focusDate.format( I18n.t( "momentjs.month_year" ) ),
                       x: observations.length,
                       y: totalSpeciesIDsForMonth
                     } )
                   ) : (
                     I18n.t( "new_species_added_in_interval", {
-                      interval: moment( `${focusYear}-${focusMonth}-10` ).format( I18n.t( "momentjs.month_year" ) )
+                      interval: focusDate.format( I18n.t( "momentjs.month_year" ) )
                     } )
                   ) }
                 </a>

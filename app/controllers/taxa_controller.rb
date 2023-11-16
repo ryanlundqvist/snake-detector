@@ -93,7 +93,9 @@ class TaxaController < ApplicationController
         # Shuffle the taxa (http://snippets.dzone.com/posts/show/2994)
         @featured_taxa = @featured_taxa.sort_by{rand}[0..10]
         Taxon.preload_associations(@featured_taxa, [
-          :iconic_taxon, :photos, :taxon_descriptions,
+          :iconic_taxon,
+          { photos: [:user, :file_prefix, :file_extension, :flags, :moderator_actions] },
+          :taxon_descriptions,
           { taxon_names: :place_taxon_names } ])
         @featured_taxa_obs = @featured_taxa.map do |taxon|
           taxon_obs_params = { taxon_id: taxon.id, order_by: "id", per_page: 1 }
@@ -110,6 +112,9 @@ class TaxaController < ApplicationController
           render :action => :search
         else
           @iconic_taxa = Taxon::ICONIC_TAXA
+          Taxon.preload_associations(@iconic_taxa, [
+            { photos: [:user, :file_prefix, :file_extension, :flags, :moderator_actions] }
+          ] )
           recent_params = { d1: 1.month.ago.to_date.to_s,
             quality_grade: :research, order_by: :observed_on }
           if @site
@@ -119,7 +124,10 @@ class TaxaController < ApplicationController
           @recent = Observation.page_of_results(recent_params).
             group_by(&:taxon_id).map{ |k,v| v.first }[0...5]
           Observation.preload_associations(@recent,{
-            taxon: [ { taxon_names: :place_taxon_names }, :photos ] } )
+            taxon: [
+              { taxon_names: :place_taxon_names },
+              { photos: [:user, :file_prefix, :file_extension, :flags, :moderator_actions] }
+            ] } )
           @recent = @recent.sort_by(&:id).reverse
         end
       end
@@ -221,6 +229,7 @@ class TaxaController < ApplicationController
         site_place = @site && @site.place
         user_place = current_user && current_user.place
         preferred_place = user_place || site_place
+        options[:authenticate] = current_user
         @node_taxon_json = INatAPIService.get_json(
           "/taxa/#{@taxon.id}?preferred_place_id=#{preferred_place.try(:id)}&place_id=#{@place.try(:id)}&locale=#{I18n.locale}",
           options
@@ -865,7 +874,7 @@ class TaxaController < ApplicationController
       format.html { render partial: "wikipedia_taxobox", object: @taxon }
     end
   end
-  
+
   def update_photos
     if @taxon.photos_locked? && !current_user.is_admin?
       respond_to do |format|
@@ -911,19 +920,6 @@ class TaxaController < ApplicationController
       format.json { render json: { error: t(:request_timed_out) }, status: :request_timeout }
       format.any do
         flash[:error] = t(:request_timed_out)
-        redirect_back_or_default( taxon_path( @taxon ) )
-      end
-    end
-  rescue Koala::Facebook::APIError => e
-    raise e unless e.message =~ /OAuthException/
-    msg = t(
-      :facebook_needs_the_owner_of_that_photo_to,
-      site_name_short: @site.site_name_short
-    )
-    respond_to do |format|
-      format.json { render json: { error: msg }, status: :unprocessable_entity }
-      format.any do
-        flash[:error] = msg 
         redirect_back_or_default( taxon_path( @taxon ) )
       end
     end
@@ -1019,21 +1015,8 @@ class TaxaController < ApplicationController
         redirect_back_or_default( taxon_path( @taxon ) )
       end
     end
-  rescue Koala::Facebook::APIError => e
-    raise e unless e.message =~ /OAuthException/
-    msg = t(
-      :facebook_needs_the_owner_of_that_photo_to,
-      site_name_short: @site.site_name_short
-    )
-    respond_to do |format|
-      format.json { render json: { error: msg }, status: :unprocessable_entity }
-      format.any do
-        flash[:error] = msg 
-        redirect_back_or_default( taxon_path( @taxon ) )
-      end
-    end
   end
-  
+
   def describe
     @describers = if @site.taxon_describers
       @site.taxon_describers.map{|d| TaxonDescribers.get_describer(d)}.compact
@@ -1473,11 +1456,29 @@ class TaxaController < ApplicationController
   def try_show
     name, format = params[:q].to_s.sanitize_encoding.split('_').join(' ').split('.')
     request.format = format if request.format.blank? && !format.blank?
-    name = name.to_s.downcase
+    # If this is not a show URL, the taxon should still be the first segment
+    name = name.to_s.downcase.split( "/" ).first
     @taxon = Taxon.single_taxon_for_name(name)
     
     # Redirect to a canonical form
     if @taxon
+      # If this is not a show URL, try to redirect to a canonical version of that url
+      if params[:q].include?( "/" ) && request.get?
+        url_pieces = params[:q].split( "/" )
+        url_pieces.shift
+        new_path = "/taxa/#{@taxon.to_param}/#{url_pieces.join( "/" )}"
+        begin
+          recognized_route = Rails.application.routes.recognize_path( new_path )
+          if recognized_route && recognized_route[:action] != "try_show"
+            redirect_to new_path
+          else
+            render_404
+          end
+        rescue ActionController::RoutingError
+          render_404
+        end
+        return
+      end
       canonical = @taxon.name.split.join( "_" )
       taxon_names ||= @taxon.taxon_names.limit(100)
       acceptable_names = [canonical] + taxon_names.map{|tn| tn.name.split.join('_')}
@@ -1499,11 +1500,11 @@ class TaxaController < ApplicationController
     # TODO: if multiple exact matches, render a disambig page with status 300 (Mulitple choices)
     unless @taxon
       return redirect_to :action => 'search', :q => name
-    else
-      params.delete(:q)
-      return_here
-      show
     end
+
+    params.delete(:q)
+    return_here
+    show
   end
   
 ## Protected / private actions ###############################################
@@ -1726,7 +1727,7 @@ class TaxaController < ApplicationController
     @genus_name, @species_name = taxon_name.name.split
     url = "http://amphibiaweb.org/cgi/amphib_ws?where-genus=#{@genus_name}&where-species=#{@species_name}&src=eol"
     Rails.logger.info "[INFO #{Time.now}] AmphibiaWeb request: #{url}"
-    xml = Nokogiri::XML(open(url))
+    xml = Nokogiri::XML( Net::HTTP.get( URI( url ) ) )
     if xml.blank? || xml.at(:error)
       get_amphibiaweb(taxon_names)
     else

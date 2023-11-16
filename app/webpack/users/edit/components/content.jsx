@@ -5,7 +5,7 @@ import { MenuItem, DropdownButton } from "react-bootstrap";
 import CheckboxRowContainer from "../containers/checkbox_row_container";
 import SettingsItem from "./settings_item";
 import LicenseImageRow from "./license_image_row";
-import PlaceAutocomplete from "../../../observations/identify/components/place_autocomplete";
+import TaxonNamePrioritiesContainer from "../containers/taxon_name_priorities_container";
 
 const radioButtons = {
   any: I18n.t( "views.users.edit.project_addition_preferences.any" ),
@@ -24,7 +24,6 @@ const Content = ( {
   handleInputChange,
   handleCustomDropdownSelect,
   handleDisplayNames,
-  handlePlaceAutocomplete,
   showModal
 } ) => {
   const iNatLicenses = iNaturalist.Licenses;
@@ -199,9 +198,9 @@ const Content = ( {
       <div className="col-md-5 col-xs-10">
         <SettingsItem>
           <h4>{I18n.t( "names" )}</h4>
-          <div className="stacked">
-            <label htmlFor="user_prefers_common_names">{I18n.t( "display" )}</label>
-          </div>
+          <label htmlFor="user_prefers_common_names">
+            { I18n.t( "views.users.edit.common_scientific_name_display_order" ) }
+          </label>
           <div className="text-muted stacked">{I18n.t( "this_is_how_taxon_names_will_be_displayed", { site_name: SITE.name } )}</div>
           <select
             className="form-control stacked dropdown"
@@ -214,15 +213,8 @@ const Content = ( {
             <option value="prefers_scientific_name_first">{`${I18n.t( "scientific_name" )} (${I18n.t( "common_name" )})`}</option>
             <option value="prefers_scientific_names">{I18n.t( "scientific_name" )}</option>
           </select>
-          <label htmlFor="user_place_id">{I18n.t( "views.users.edit.name_place_help_html" )}</label>
-          <PlaceAutocomplete
-            resetOnChange={false}
-            initialPlaceID={profile.place_id}
-            bootstrapClear
-            afterSelect={e => handlePlaceAutocomplete( e, "place_id" )}
-            afterClear={( ) => handlePlaceAutocomplete( { item: { id: 0 } }, "place_id" )}
-          />
         </SettingsItem>
+        <TaxonNamePrioritiesContainer />
         <SettingsItem>
           <h4>{I18n.t( "community_moderation_settings" )}</h4>
           <CheckboxRowContainer
@@ -252,6 +244,7 @@ const Content = ( {
 };
 
 Content.propTypes = {
+  config: PropTypes.object,
   profile: PropTypes.object,
   handleInputChange: PropTypes.func,
   handleCustomDropdownSelect: PropTypes.func,

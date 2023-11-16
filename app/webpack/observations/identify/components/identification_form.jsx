@@ -20,6 +20,7 @@ class IdentificationForm extends React.Component {
 
   render( ) {
     const {
+      config,
       observation: o,
       onSubmitIdentification,
       className,
@@ -48,7 +49,8 @@ class IdentificationForm extends React.Component {
             let observationTaxon = o.taxon;
             if (
               o.preferences.prefers_community_taxon === false
-              || o.user.preferences.prefers_community_taxa === false
+              || (o.user.preferences.prefers_community_taxa === false 
+              && o.preferences.prefers_community_taxon === null)
             ) {
               observationTaxon = o.community_taxon || o.taxon;
             }
@@ -57,7 +59,7 @@ class IdentificationForm extends React.Component {
               && _.includes( observationTaxon.ancestor_ids, idTaxon.id );
           };
           const params = {
-            observation_id: o.id,
+            observation_id: config.testingApiV2 ? o.uuid : o.id,
             taxon_id: idTaxon.id,
             body: content,
             blind
@@ -120,6 +122,7 @@ class IdentificationForm extends React.Component {
 }
 
 IdentificationForm.propTypes = {
+  config: PropTypes.object,
   observation: PropTypes.object,
   onSubmitIdentification: PropTypes.func.isRequired,
   className: PropTypes.string,
